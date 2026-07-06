@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0b0d0c;
+  --bg-raised: #121513;
+  --bg-inset: #08090a;
+  --line: #232825;
+  --line-bright: #37403b;
+  --ink: #d9e3dc;
+  --ink-dim: #7c8a80;
+  --ink-faint: #4d564f;
+
+  --error: #ff5d5d;
+  --error-dim: #4a2222;
+  --warning: #ffb545;
+  --warning-dim: #4a3a18;
+  --info: #5ec8ff;
+  --info-dim: #1c3a4a;
+  --uncategorized: #8f8f8f;
+  --uncategorized-dim: #2e2e2e;
+  --accent: #9dff7a;
+  --accent-dim: #1e3a14;
+
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-display: "Fjalla One", "IBM Plex Mono", sans-serif;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-raised: var(--bg-raised);
+  --color-ink: var(--ink);
+  --font-mono-custom: var(--font-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(157, 255, 122, 0.04), transparent),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+::selection {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+/* subtle scanline texture over the whole app, very low opacity */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.012) 0px,
+    rgba(255, 255, 255, 0.012) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  z-index: 50;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-inset);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-bright);
+  border-radius: 0;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

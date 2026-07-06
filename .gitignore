@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# runtime/dev data
+data/
+*.db
+*.db-journal
+drain3_state.bin
+
+config.yaml
+values-production.yaml
+
+.env
+.DS_Store

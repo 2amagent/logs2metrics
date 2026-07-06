@@ -1,0 +1,11 @@
+apiVersion: v2
+name: log-triage
+description: Self-hostable log triage service — Drain3 clustering, human categorization, Prometheus metrics, object-store archival.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/your-org/log-triage
+sources:
+  - https://github.com/your-org/log-triage
+maintainers:
+  - name: your-org

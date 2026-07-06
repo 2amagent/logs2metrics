@@ -1,0 +1,89 @@
+image:
+  repository: ghcr.io/your-org/log-triage
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+# Single-writer architecture: one process owns Drain3 state + the SQLite file.
+# Do not increase this until a future phase adds Redis-backed Drain3 persistence
+# and an external DB — a second replica would corrupt or race on shared state.
+replicaCount: 1
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false # /data PVC mount is the writable exception
+
+resources:
+  # CPU-bound single-threaded clustering: one core is the practical ceiling for
+  # the worker thread. Size requests/limits accordingly; do not expect more
+  # throughput from extra cores on this replica.
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 512Mi
+
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClassName: ""
+  accessMode: ReadWriteOnce
+
+service:
+  # API and /metrics are served on the same port by the single Uvicorn process.
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: log-triage.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+serviceMonitor:
+  enabled: false
+  interval: 15s
+  labels: {}
+
+# Mirrors config.example.yaml / logtriage.config.Settings in the app.
+config:
+  messageField: "log"
+  queueMaxSize: 10000
+  sampleLineCap: 5
+  flushSizeBytes: 1000000
+  flushIntervalSeconds: 30
+
+drain3:
+  simTh: 0.4
+  depth: 4
+  maxChildren: 100
+  maxClusters: "" # blank = unbounded
+
+objectStore:
+  # none | local | s3 | azure. Off by default — enable "s3" if you want the
+  # per-line cluster_id/severity/muted archive on top of whatever your log
+  # transporter already ships. See charts/log-triage/README.md.
+  backend: none
+  s3:
+    bucket: logtriage
+    endpoint: "" # blank = AWS default; set for other S3-compatible providers
+    region: us-east-1
+    # Prefer existingSecret in production over inline credentials below.
+    existingSecret: ""
+    accessKeyId: ""
+    secretAccessKey: ""

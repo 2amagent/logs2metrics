@@ -1,0 +1,49 @@
+# Copy to config.yaml (or set LOGTRIAGE_* env vars — env overrides file values).
+
+# HTTP server
+host: "0.0.0.0"
+port: 8000
+
+# Field in each ingest record holding the raw log message.
+message_field: "log"
+
+# Bound on the ingest -> worker queue. /ingest returns 503 once full (backpressure).
+queue_max_size: 10000
+
+# SQLite path for template metadata (severity/muted/status/counts/samples).
+db_path: "./data/logtriage.db"
+
+# Drain3 masking + engine tuning (sim_th/depth/max_children/max_clusters).
+drain3_config_path: "./drain3.ini"
+# Drain3's own tree-state persistence file (separate from db_path; joined by cluster_id).
+drain3_persistence_path: "./data/drain3_state.bin"
+
+# Cap on raw example lines stored per template.
+sample_line_cap: 5
+
+# Object storage backend for archival: none | local | s3 | azure
+# "none" disables archival entirely — enriched records are still counted into
+# metrics, just never written anywhere. Reasonable default if your log
+# transporter (Fluent Bit, Vector, etc.) already ships raw logs to a bucket on
+# its own; enable a real backend if you want the per-line cluster_id/severity/
+# muted enrichment preserved for audit/replay/future dataset use.
+object_store_backend: "none"
+
+local:
+  data_dir: "./data/archive"
+
+s3:
+  bucket: "logtriage"
+  endpoint_url: null # set for MinIO / non-AWS S3-compatible endpoints, e.g. "http://minio:9000"
+  region: "us-east-1"
+  access_key_id: null # prefer env var LOGTRIAGE_S3__ACCESS_KEY_ID or IAM role
+  secret_access_key: null
+
+azure:
+  account_url: null
+  container: "logtriage"
+  connection_string: null # ships in Phase 2
+
+# Archive buffer: flush as gzipped NDJSON when either threshold trips.
+flush_size_bytes: 1000000
+flush_interval_seconds: 30

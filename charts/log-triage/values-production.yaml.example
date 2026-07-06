@@ -1,0 +1,53 @@
+# Copy to values-production.yaml and fill in the placeholders before installing.
+# See charts/log-triage/README.md for the full installation walkthrough.
+
+image:
+  repository: ghcr.io/your-org/log-triage
+  tag: "0.1.0"
+
+replicaCount: 1 # do not increase — see values.yaml comment
+
+persistence:
+  enabled: true
+  size: 20Gi
+  storageClassName: "gp3" # set to your cluster's StorageClass
+
+# Archival defaults to "none" in values.yaml — remove this block (or set
+# backend: none) if your log transporter already ships raw logs to a bucket
+# on its own and you don't need the per-line cluster_id/severity/muted archive.
+objectStore:
+  backend: s3
+  s3:
+    bucket: "your-company-logtriage-archive"
+    region: "us-east-1"
+    endpoint: "" # leave blank for AWS S3; set for other S3-compatible providers
+    # Create ahead of install:
+    #   kubectl create secret generic log-triage-s3-creds \
+    #     --from-literal=accessKeyId=... --from-literal=secretAccessKey=...
+    existingSecret: "log-triage-s3-creds"
+
+ingress:
+  enabled: true
+  className: "nginx"
+  hosts:
+    - host: "log-triage.yourcompany.com"
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: log-triage-tls
+      hosts:
+        - log-triage.yourcompany.com
+
+serviceMonitor:
+  enabled: true
+  labels:
+    release: kube-prometheus-stack # match your Prometheus Operator's serviceMonitorSelector
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
