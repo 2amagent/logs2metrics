@@ -26,6 +26,18 @@ spec:
       {{- end }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        # cinder.csi.openstack.org doesn't honor fsGroup, leaving fresh volumes
+        # root:root — chown so the non-root app container (uid 1000) can write.
+        - name: fix-data-permissions
+          image: busybox:1.36
+          command: ["sh", "-c", "chown -R 1000:1000 /data"]
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+          volumeMounts:
+            - name: data
+              mountPath: /data
       containers:
         - name: log-triage
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
