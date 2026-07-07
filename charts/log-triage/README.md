@@ -109,6 +109,7 @@ See `values.yaml` for the full set of defaults and inline comments. Key sections
 | Key | Purpose |
 |---|---|
 | `replicaCount` | Fixed at 1 — see "Why single-replica" above |
+| `image.pullSecretName` | Name of an existing `kubernetes.io/dockerconfigjson` Secret for pulling from a private registry. Blank = no `imagePullSecrets` on the pod |
 | `persistence.*` | PVC size/storageClass for `/data` (SQLite + Drain3 state) |
 | `objectStore.s3.*` | Archival bucket, region, endpoint, credentials |
 | `config.*` | Mirrors `config.example.yaml` in the app repo |

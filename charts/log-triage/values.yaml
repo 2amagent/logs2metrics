@@ -2,6 +2,13 @@ image:
   repository: ghcr.io/your-org/log-triage
   tag: "0.1.0"
   pullPolicy: IfNotPresent
+  # Name of an existing `kubernetes.io/dockerconfigjson` Secret to use for
+  # pulling from a private registry, e.g. created ahead of install with:
+  #   kubectl create secret docker-registry log-triage-pull-secret \
+  #     --docker-server=ghcr.io --docker-username=... --docker-password=...
+  # Leave blank if the repository is public or the node already has pull
+  # access (e.g. via a cloud provider's attached registry credentials).
+  pullSecretName: ""
 
 # Single-writer architecture: one process owns Drain3 state + the SQLite file.
 # Do not increase this until a future phase adds Redis-backed Drain3 persistence

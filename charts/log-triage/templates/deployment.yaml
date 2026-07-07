@@ -20,6 +20,10 @@ spec:
         {{- include "log-triage.selectorLabels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "log-triage.serviceAccountName" . }}
+      {{- if .Values.image.pullSecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.image.pullSecretName }}
+      {{- end }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:

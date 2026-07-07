@@ -4,6 +4,10 @@
 image:
   repository: ghcr.io/your-org/log-triage
   tag: "0.1.0"
+  # Uncomment if pulling from a private registry:
+  #   kubectl create secret docker-registry log-triage-pull-secret \
+  #     --docker-server=ghcr.io --docker-username=... --docker-password=...
+  # pullSecretName: "log-triage-pull-secret"
 
 replicaCount: 1 # do not increase — see values.yaml comment
 

@@ -98,7 +98,42 @@ file if this trips you up again).
 design is a single-writer architecture; the chart enforces `replicaCount: 1`
 and `strategy: Recreate` so a rollout never runs two pods against the same
 ReadWriteOnce PVC. Don't add HPA or multi-replica support without first
-addressing Drain3/SQLite's single-writer constraint (see `charts/log-triage/README.md`).
+addressing Drain3/SQLite's single-writer constraint (see `charts/log-triage/README.md`
+and "Roadmap" below).
+
+## Roadmap / known limitations (pre-production)
+
+**Running more than one replica will silently corrupt or fragment state.**
+This must be addressed before productionizing multi-replica deployment —
+don't remove the `replicaCount: 1` guard without solving all of these:
+
+- **SQLite is not safe for multi-process concurrent writers.** Two pods
+  writing the same PVC-backed file race on `INSERT`/`UPDATE` (lost updates on
+  `match_count`, etc.) and can hit `database is locked` — or silent
+  corruption on filesystems with unreliable POSIX locking (e.g. many
+  NFS/ReadWriteMany setups). Fix requires swapping `SqliteTemplateStore` for
+  a real client-server DB (Postgres) behind the same `TemplateStore` port.
+- **Drain3 state is a split-brain risk across replicas.** Each pod loads its
+  own in-memory tree and can assign different `cluster_id`s to the same
+  pattern; concurrent `save_state()` calls to the same `FilePersistence` file
+  overwrite each other, silently discarding one pod's clustering progress.
+  Fix requires wiring up `drain3.redis_persistence.RedisPersistence` (already
+  a supported drain3 backend, not yet used here) so clustering state is
+  centrally coordinated instead of file-based per-pod.
+- **ReadWriteOnce PVC can't be mounted by two pods on most cloud
+  StorageClasses** (EBS/PD/Azure Disk) — a second replica would fail to
+  schedule. Moving to ReadWriteMany storage only gets you to the two problems
+  above, not around them.
+- **The ingest queue and backpressure are per-pod, not cluster-wide.**
+  `logtriage_queue_depth` and the 503-on-full-queue backpressure signal only
+  reflect one replica's local `queue.Queue`; Fluent Bit round-robining across
+  pods could starve/flood one replica while another looks idle.
+- **`templates_pending`/`templates_total` gauges would reflect a fragmented,
+  possibly inconsistent view of SQLite** if two pods raced on writes per the
+  first bullet.
+
+None of these are config flags — they're an architecture change (external DB
++ Redis-backed Drain3 persistence + a cluster-aware queue/backpressure model).
 
 ## Testing patterns
 
