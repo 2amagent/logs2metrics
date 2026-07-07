@@ -7,6 +7,7 @@ on:
         description: "Tag to apply to the built image (e.g. v0.2.0, latest)"
         required: true
         type: string
+        default: "latest"
       branch:
         description: "Branch/ref to build from"
         required: true
