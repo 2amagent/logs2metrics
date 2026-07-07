@@ -1,10 +1,13 @@
 import json
+import logging
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
 from logtriage.models import TemplateOut
 from logtriage.ports.template_store import TemplateStore
+
+logger = logging.getLogger(__name__)
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS templates (
@@ -48,11 +51,22 @@ class SqliteTemplateStore(TemplateStore):
     """Raw sqlite3 adapter. Single writer (the worker thread) by construction of the pipeline."""
 
     def __init__(self, db_path: str, sample_line_cap: int = 5):
-        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(db_path, check_same_thread=False)
-        self._conn.row_factory = sqlite3.Row
-        self._conn.executescript(SCHEMA)
-        self._conn.commit()
+        resolved_path = Path(db_path).resolve()
+        logger.info("Opening SQLite template store at %s", resolved_path)
+        try:
+            Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            logger.exception("Failed to create parent directory for SQLite db at %s", resolved_path)
+            raise
+        try:
+            self._conn = sqlite3.connect(db_path, check_same_thread=False)
+            self._conn.row_factory = sqlite3.Row
+            self._conn.executescript(SCHEMA)
+            self._conn.commit()
+        except sqlite3.Error:
+            logger.exception("Failed to open/initialize SQLite db at %s", resolved_path)
+            raise
+        logger.info("SQLite template store ready at %s", resolved_path)
         self._sample_line_cap = sample_line_cap
 
     def create_pending(self, cluster_id: int, template: str, sample_line: str) -> None:

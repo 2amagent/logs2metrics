@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
 
+    # logging
+    log_level: str = "INFO"
+
     # ingest pipeline
     message_field: str = "log"
     queue_max_size: int = 10_000

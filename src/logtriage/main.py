@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from logtriage.api import health, ingest, templates
 from logtriage.config import Settings
 from logtriage.factory import build_clusterer, build_metrics_sink, build_object_store, build_template_store
+from logtriage.logging_config import configure_logging
 from logtriage.worker.archive_buffer import ArchiveBuffer
 from logtriage.worker.pipeline import PipelineWorker
 
@@ -23,6 +24,7 @@ def _reconcile(store, clusterer) -> None:
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings.from_yaml(os.environ.get("LOGTRIAGE_CONFIG_PATH", "config.yaml"))
+    configure_logging(settings.log_level)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
